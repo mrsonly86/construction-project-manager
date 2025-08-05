@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date") 
+  budget      Float?
+  status      ProjectStatus @default(PLANNING)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  workItems   WorkItem[]
+  
+  @@map("projects")
+}
+
+model WorkItem {
+  id                String   @id @default(uuid())
+  projectId         String   @map("project_id")
+  name              String
+  description       String?
+  unit              String
+  designQuantity    Float    @map("design_quantity")
+  completedQuantity Float    @default(0) @map("completed_quantity")
+  unitPrice         Float    @map("unit_price")
+  startDate         DateTime? @map("start_date")
+  endDate           DateTime? @map("end_date")
+  status            WorkItemStatus @default(NOT_STARTED)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  project          Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workAssignments  WorkAssignment[]
+  attendance       Attendance[]
+  materialUsage    MaterialUsage[]
+  equipmentUsage   EquipmentUsage[]
+  
+  @@map("work_items")
+}
+
+model Material {
+  id             String   @id @default(uuid())
+  name           String
+  category       String
+  unit           String
+  unitPrice      Float    @map("unit_price")
+  stockQuantity  Float    @default(0) @map("stock_quantity")
+  minimumStock   Float    @default(0) @map("minimum_stock")
+  supplier       String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  materialUsage  MaterialUsage[]
+  
+  @@map("materials")
+}
+
+model Equipment {
+  id              String   @id @default(uuid())
+  name            String
+  type            String
+  model           String?
+  status          EquipmentStatus @default(AVAILABLE)
+  dailyRate       Float    @map("daily_rate")
+  lastMaintenance DateTime? @map("last_maintenance")
+  nextMaintenance DateTime? @map("next_maintenance")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  equipmentUsage  EquipmentUsage[]
+  
+  @@map("equipment")
+}
+
+model Worker {
+  id           String   @id @default(uuid())
+  employeeCode String   @unique @map("employee_code")
+  name         String
+  position     String
+  skillLevel   Int      @map("skill_level")
+  hourlyRate   Float    @map("hourly_rate")
+  dailyRate    Float    @map("daily_rate")
+  phone        String?
+  address      String?
+  hireDate     DateTime @map("hire_date")
+  status       WorkerStatus @default(ACTIVE)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  workAssignments WorkAssignment[]
+  attendance      Attendance[]
+  equipmentUsage  EquipmentUsage[]
+  
+  @@map("workers")
+}
+
+model WorkAssignment {
+  id             String   @id @default(uuid())
+  workItemId     String   @map("work_item_id")
+  workerId       String   @map("worker_id")
+  assignedDate   DateTime @map("assigned_date")
+  estimatedHours Float    @map("estimated_hours")
+  role           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  workItem       WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  worker         Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  
+  @@map("work_assignments")
+}
+
+model Attendance {
+  id            String   @id @default(uuid())
+  workerId      String   @map("worker_id")
+  workItemId    String   @map("work_item_id")
+  date          DateTime
+  timeIn        String?  @map("time_in")
+  timeOut       String?  @map("time_out")
+  hoursWorked   Float?   @map("hours_worked")
+  overtimeHours Float    @default(0) @map("overtime_hours")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  worker        Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  workItem      WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  
+  @@map("attendance")
+}
+
+model MaterialUsage {
+  id           String   @id @default(uuid())
+  workItemId   String   @map("work_item_id")
+  materialId   String   @map("material_id")
+  quantityUsed Float    @map("quantity_used")
+  dateUsed     DateTime @map("date_used")
+  unitCost     Float    @map("unit_cost")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  workItem     WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  material     Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  
+  @@map("material_usage")
+}
+
+model EquipmentUsage {
+  id         String   @id @default(uuid())
+  workItemId String   @map("work_item_id")
+  equipmentId String  @map("equipment_id")
+  dateUsed   DateTime @map("date_used")
+  hoursUsed  Float    @map("hours_used")
+  operatorId String   @map("operator_id")
+  cost       Float
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  workItem   WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  equipment  Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  operator   Worker   @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  
+  @@map("equipment_usage")
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+enum WorkItemStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  BROKEN
+}
+
+enum WorkerStatus {
+  ACTIVE
+  INACTIVE
+}
