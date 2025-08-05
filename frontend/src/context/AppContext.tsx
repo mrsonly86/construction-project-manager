@@ -1,5 +1,35 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Project, WorkItem } from '../services/api';
+
+// Define types locally
+interface Project {
+  id?: string;
+  name: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  budget?: number;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  completionPercentage?: number;
+  workItems?: WorkItem[];
+}
+
+interface WorkItem {
+  id?: string;
+  project_id: string;
+  name: string;
+  description?: string;
+  unit: string;
+  design_quantity: number;
+  completed_quantity?: number;
+  unit_price: number;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 // State interface
 interface AppState {

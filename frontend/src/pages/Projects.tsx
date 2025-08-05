@@ -17,7 +17,22 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { projectService, Project } from '../services/api';
+import { projectService } from '../services/api';
+
+// Define types locally for now
+interface Project {
+  id?: string;
+  name: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  budget?: number;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  completionPercentage?: number;
+  workItems?: any[];
+}
 import { format } from 'date-fns';
 
 const Projects: React.FC = () => {
